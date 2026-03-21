@@ -1,0 +1,81 @@
+name: CD - Backend (Cloud Run)
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'backend/**'
+
+env:
+  SERVICE_NAME: family-app-api
+  GCP_REGION: asia-northeast1
+
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      gcp_project: ${{ steps.env.outputs.gcp_project }}
+    steps:
+      - id: env
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "gcp_project=youyaku-ai" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "gcp_project=youyaku-ai-dev" >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    needs: set-env
+    runs-on: ubuntu-latest
+    environment: ${{ needs.set-env.outputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+
+      - name: Build & Push Docker image
+        working-directory: backend
+        run: |
+          IMAGE="${{ env.GCP_REGION }}-docker.pkg.dev/${{ needs.set-env.outputs.gcp_project }}/family-app/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Run DB migrations
+        run: |
+          gcloud run jobs execute db-migrate \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ needs.set-env.outputs.gcp_project }} \
+            --wait
+
+      - name: Deploy to Cloud Run
+        run: |
+          IMAGE="${{ env.GCP_REGION }}-docker.pkg.dev/${{ needs.set-env.outputs.gcp_project }}/family-app/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image "$IMAGE" \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ needs.set-env.outputs.gcp_project }} \
+            --platform managed \
+            --min-instances 1 \
+            --max-instances 10 \
+            --memory 512Mi \
+            --cpu 1 \
+            --port 8080 \
+            --set-env-vars "ENV=${{ needs.set-env.outputs.environment }}" \
+            --set-secrets "DB_PASSWORD=db-password:latest,FIREBASE_PROJECT_ID=firebase-project-id:latest" \
+            --allow-unauthenticated
