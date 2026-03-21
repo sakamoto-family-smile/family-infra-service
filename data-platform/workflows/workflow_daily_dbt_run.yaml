@@ -1,0 +1,66 @@
+main:
+  params: [args]
+  steps:
+    - init:
+        assign:
+          - project_id: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
+          - region: "asia-northeast1"
+          - job_name: "dbt-runner"
+
+    - export_firestore:
+        call: http.post
+        args:
+          url: ${"https://firestore.googleapis.com/v1/projects/" + project_id + "/databases/(default):exportDocuments"}
+          auth:
+            type: OAuth2
+          body:
+            outputUriPrefix: ${"gs://family-app-media-" + args.env + "/firestore-export/" + text.substring(time.format(sys.now()), 0, 10)}
+            collectionIds:
+              - "chat_rooms"
+              - "families"
+        result: firestore_export_result
+
+    - wait_firestore_export:
+        call: sys.sleep
+        args:
+          seconds: 60
+
+    - export_cloud_sql:
+        call: http.post
+        args:
+          url: ${"https://sqladmin.googleapis.com/v1/projects/" + project_id + "/instances/family-app-db/export"}
+          auth:
+            type: OAuth2
+          body:
+            exportContext:
+              kind: "sql#exportContext"
+              fileType: "CSV"
+              uri: ${"gs://family-app-media-" + args.env + "/cloudsql-export/" + text.substring(time.format(sys.now()), 0, 10) + "/"}
+              databases:
+                - "family_app"
+              csvExportOptions:
+                selectQuery: "SELECT * FROM users; SELECT * FROM families; SELECT * FROM calendar_events; SELECT * FROM chat_rooms;"
+        result: sql_export_result
+
+    - run_dbt:
+        call: http.post
+        args:
+          url: ${"https://" + region + "-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/" + project_id + "/jobs/" + job_name + ":run"}
+          auth:
+            type: OAuth2
+        result: dbt_run_result
+
+    - check_dbt_result:
+        switch:
+          - condition: ${dbt_run_result.code == 200}
+            next: success
+          - condition: true
+            next: handle_failure
+
+    - handle_failure:
+        raise:
+          message: "dbt run failed"
+          code: 500
+
+    - success:
+        return: "Daily dbt pipeline completed successfully"

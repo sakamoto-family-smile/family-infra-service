@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: stg_users
+    description: "ユーザー情報のステージングモデル"
+    columns:
+      - name: user_id
+        tests: [unique, not_null]
+      - name: firebase_uid
+        tests: [unique, not_null]
+      - name: family_id
+        tests: [not_null]
+      - name: role
+        tests:
+          - accepted_values:
+              values: ['admin', 'member', 'child']
+
+  - name: stg_families
+    description: "家族グループのステージングモデル"
+    columns:
+      - name: family_id
+        tests: [unique, not_null]
+
+  - name: stg_chat_rooms
+    description: "チャットルームのステージングモデル"
+    columns:
+      - name: chat_room_id
+        tests: [unique, not_null]
+
+  - name: stg_messages
+    description: "チャットメッセージのステージングモデル"
+    columns:
+      - name: message_id
+        tests: [unique, not_null]
+
+  - name: stg_calendar_events
+    description: "カレンダーイベントのステージングモデル"
+    columns:
+      - name: event_id
+        tests: [unique, not_null]
+
+  - name: stg_todo_lists
+    description: "TODOリストのステージングモデル"
+    columns:
+      - name: todo_list_id
+        tests: [unique, not_null]
+
+  - name: stg_todo_items
+    description: "TODOアイテムのステージングモデル"
+    columns:
+      - name: todo_item_id
+        tests: [unique, not_null]

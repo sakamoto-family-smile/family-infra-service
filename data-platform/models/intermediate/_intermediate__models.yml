@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: int_user_sessions
+    description: "ユーザーのセッション・アクティビティ集計"
+
+  - name: int_message_daily
+    description: "メッセージ日次集計"
+
+  - name: int_todo_completion
+    description: "TODO完了率集計"

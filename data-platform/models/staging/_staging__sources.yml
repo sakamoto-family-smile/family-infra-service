@@ -1,0 +1,46 @@
+version: 2
+
+sources:
+  - name: cloud_sql
+    description: "Cloud SQL (PostgreSQL) からエクスポートされたデータ"
+    database: youyaku-ai
+    schema: raw_cloud_sql
+    tables:
+      - name: users
+        description: "ユーザー情報"
+        columns:
+          - name: id
+            tests: [unique, not_null]
+          - name: firebase_uid
+            tests: [unique, not_null]
+          - name: family_id
+            tests: [not_null]
+          - name: email
+            tests: [not_null]
+      - name: families
+        description: "家族グループ"
+        columns:
+          - name: id
+            tests: [unique, not_null]
+      - name: chat_rooms
+        description: "チャットルーム"
+        columns:
+          - name: id
+            tests: [unique, not_null]
+      - name: calendar_events
+        description: "カレンダーイベント"
+        columns:
+          - name: id
+            tests: [unique, not_null]
+
+  - name: firestore
+    description: "Firestore からエクスポートされたデータ"
+    database: youyaku-ai
+    schema: raw_firestore
+    tables:
+      - name: messages
+        description: "チャットメッセージ"
+      - name: todo_lists
+        description: "TODOリスト"
+      - name: todo_items
+        description: "TODOアイテム"

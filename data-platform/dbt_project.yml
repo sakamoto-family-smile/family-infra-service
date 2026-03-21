@@ -1,0 +1,33 @@
+name: 'family_app'
+version: '1.0.0'
+config-version: 2
+
+profile: 'family_app'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  family_app:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: ephemeral
+    marts:
+      +materialized: table
+      +schema: marts
+    reports:
+      +materialized: table
+      +schema: reports
+
+vars:
+  start_date: '2024-01-01'

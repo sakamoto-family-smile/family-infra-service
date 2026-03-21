@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: dim_users
+    description: "ユーザーディメンション"
+    columns:
+      - name: user_id
+        tests: [unique, not_null]
+
+  - name: dim_families
+    description: "家族ディメンション"
+    columns:
+      - name: family_id
+        tests: [unique, not_null]
+
+  - name: fct_messages
+    description: "メッセージファクト"
+
+  - name: fct_calendar_events
+    description: "カレンダーイベントファクト"
+
+  - name: fct_todo_items
+    description: "TODOアイテムファクト"
+
+  - name: fct_daily_active_users
+    description: "日次アクティブユーザーファクト"

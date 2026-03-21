@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ========================================
+    // Helper functions
+    // ========================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Custom Claims に family_id をセットする前提
+    // Firebase Admin SDK で setCustomUserClaims({ family_id: "..." }) を呼び出す
+    function isFamilyMember(familyId) {
+      return isAuthenticated() && request.auth.token.family_id == familyId;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ========================================
+    // Chat Rooms
+    // ========================================
+
+    // チャットメッセージ
+    // 本来は roomId から family_id を引いて isFamilyMember で制御するが、
+    // Firestore の単一ドキュメント読み取りを避けるため Custom Claims を活用
+    match /chat_rooms/{roomId}/messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+                    && request.resource.data.sender_id == request.auth.uid
+                    && request.resource.data.keys().hasAll(['sender_id', 'type', 'body', 'created_at']);
+      allow update: if isAuthenticated()
+                    && (
+                      // 送信者本人のみ編集・論理削除可能
+                      resource.data.sender_id == request.auth.uid
+                      // または既読更新 (read_by フィールドのみ変更)
+                      || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read_by', 'updated_at']))
+                    );
+      allow delete: if false; // 論理削除のみ
+    }
+
+    // リアクション
+    match /chat_rooms/{roomId}/messages/{messageId}/reactions/{reactionId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+                    && request.resource.data.user_id == request.auth.uid;
+      allow delete: if isAuthenticated()
+                    && resource.data.user_id == request.auth.uid;
+      allow update: if false;
+    }
+
+    // ========================================
+    // TODO
+    // ========================================
+
+    match /families/{familyId}/todo_lists/{listId} {
+      allow read: if isFamilyMember(familyId);
+      allow create: if isFamilyMember(familyId)
+                    && request.resource.data.family_id == familyId
+                    && request.resource.data.created_by == request.auth.uid;
+      allow update: if isFamilyMember(familyId);
+      allow delete: if isFamilyMember(familyId);
+
+      match /todo_items/{itemId} {
+        allow read: if isFamilyMember(familyId);
+        allow create: if isFamilyMember(familyId)
+                      && request.resource.data.created_by == request.auth.uid;
+        allow update: if isFamilyMember(familyId);
+        allow delete: if isFamilyMember(familyId);
+      }
+    }
+  }
+}

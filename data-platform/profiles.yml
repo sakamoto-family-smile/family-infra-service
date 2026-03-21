@@ -1,0 +1,28 @@
+family_app:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: youyaku-ai-dev
+      dataset: family_app_dbt
+      location: asia-northeast1
+      threads: 4
+      timeout_seconds: 300
+    prod:
+      type: bigquery
+      method: service-account
+      project: youyaku-ai
+      dataset: family_app_dbt
+      location: asia-northeast1
+      threads: 8
+      timeout_seconds: 300
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+    ci:
+      type: bigquery
+      method: oauth
+      project: youyaku-ai-dev
+      dataset: family_app_dbt_ci
+      location: asia-northeast1
+      threads: 2
+      timeout_seconds: 300

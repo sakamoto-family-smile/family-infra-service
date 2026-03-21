@@ -1,0 +1,14 @@
+# 全 Cloud Functions 共通の依存パッケージ
+# 各サブディレクトリの requirements.txt も個別に維持すること
+
+# Firebase / GCP
+firebase-functions>=0.1.0
+firebase-admin>=6.0.0
+google-cloud-firestore>=2.13.0
+google-cloud-storage>=2.13.0
+
+# HTTP サーバー (reminder_dispatcher)
+flask>=3.0.0
+
+# 画像処理 (image_resize)
+Pillow>=10.0.0

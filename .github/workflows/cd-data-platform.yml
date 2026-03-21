@@ -1,0 +1,102 @@
+name: CD - Data Platform (dbt + Workflows)
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'data-platform/**'
+
+env:
+  GCP_REGION: asia-northeast1
+
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      gcp_project: ${{ steps.env.outputs.gcp_project }}
+    steps:
+      - id: env
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "gcp_project=youyaku-ai" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "gcp_project=youyaku-ai-dev" >> $GITHUB_OUTPUT
+          fi
+
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dbt
+        run: pip install dbt-bigquery==1.8.0
+      - name: dbt deps
+        working-directory: data-platform
+        run: dbt deps
+      - name: dbt compile
+        working-directory: data-platform
+        run: dbt compile --target ci
+
+  deploy:
+    needs: [set-env, ci]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.set-env.outputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build & Push dbt Docker image
+        run: |
+          IMAGE="${{ env.GCP_REGION }}-docker.pkg.dev/${{ needs.set-env.outputs.gcp_project }}/family-app/dbt-runner:${{ github.sha }}"
+          docker build -t "$IMAGE" data-platform/
+          docker push "$IMAGE"
+
+      - name: Update Cloud Run Job for dbt
+        run: |
+          IMAGE="${{ env.GCP_REGION }}-docker.pkg.dev/${{ needs.set-env.outputs.gcp_project }}/family-app/dbt-runner:${{ github.sha }}"
+          gcloud run jobs update dbt-runner \
+            --image "$IMAGE" \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ needs.set-env.outputs.gcp_project }}
+
+      - name: Deploy Cloud Workflows
+        run: |
+          gcloud workflows deploy daily-dbt-pipeline \
+            --source data-platform/workflows/workflow_daily_dbt_run.yaml \
+            --location ${{ env.GCP_REGION }} \
+            --project ${{ needs.set-env.outputs.gcp_project }}
+
+      - name: Update Cloud Scheduler
+        run: |
+          ENV=${{ needs.set-env.outputs.environment }}
+          PROJECT=${{ needs.set-env.outputs.gcp_project }}
+          gcloud scheduler jobs update http daily-dbt-trigger \
+            --location ${{ env.GCP_REGION }} \
+            --schedule "0 21 * * *" \
+            --uri "https://workflowexecutions.googleapis.com/v1/projects/${PROJECT}/locations/${{ env.GCP_REGION }}/workflows/daily-dbt-pipeline/executions" \
+            --message-body "{\"argument\": \"{\\\"env\\\": \\\"${ENV}\\\"}\"}" \
+            --oauth-service-account-email ${{ vars.GCP_SA_EMAIL }} \
+            --project "$PROJECT" \
+            || gcloud scheduler jobs create http daily-dbt-trigger \
+              --location ${{ env.GCP_REGION }} \
+              --schedule "0 21 * * *" \
+              --uri "https://workflowexecutions.googleapis.com/v1/projects/${PROJECT}/locations/${{ env.GCP_REGION }}/workflows/daily-dbt-pipeline/executions" \
+              --message-body "{\"argument\": \"{\\\"env\\\": \\\"${ENV}\\\"}\"}" \
+              --oauth-service-account-email ${{ vars.GCP_SA_EMAIL }} \
+              --project "$PROJECT"

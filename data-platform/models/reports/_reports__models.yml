@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: rpt_daily_kpi
+    description: "日次KPI (DAU, メッセージ数, TODO完了数)"
+
+  - name: rpt_user_retention
+    description: "ユーザーリテンション分析 (コホート別)"
+
+  - name: rpt_family_activity
+    description: "家族別アクティビティサマリー"
+
+  - name: rpt_feature_usage
+    description: "機能別利用状況"

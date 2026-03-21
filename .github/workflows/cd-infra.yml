@@ -1,0 +1,114 @@
+name: CD - Infrastructure (Terraform)
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'infra/**'
+  pull_request:
+    paths:
+      - 'infra/**'
+
+env:
+  TF_VERSION: "1.9.0"
+
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      tfvars_file: ${{ steps.env.outputs.tfvars_file }}
+      gcp_project: ${{ steps.env.outputs.gcp_project }}
+    steps:
+      - id: env
+        run: |
+          REF="${{ github.base_ref || github.ref_name }}"
+          if [ "$REF" = "main" ]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "tfvars_file=environments/prod.tfvars" >> $GITHUB_OUTPUT
+            echo "gcp_project=youyaku-ai" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "tfvars_file=environments/dev.tfvars" >> $GITHUB_OUTPUT
+            echo "gcp_project=youyaku-ai-dev" >> $GITHUB_OUTPUT
+          fi
+
+  plan:
+    needs: set-env
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        working-directory: infra
+        run: |
+          terraform init \
+            -backend-config="bucket=family-app-tfstate-${{ needs.set-env.outputs.environment }}"
+
+      - name: Terraform Validate
+        working-directory: infra
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: infra
+        run: |
+          terraform plan \
+            -var-file="${{ needs.set-env.outputs.tfvars_file }}" \
+            -out=tfplan
+
+      - name: Comment plan on PR
+        if: github.event_name == 'pull_request'
+        uses: borchero/terraform-plan-comment@v2
+        with:
+          working-directory: infra
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  apply:
+    needs: [set-env, plan]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.set-env.outputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        working-directory: infra
+        run: |
+          terraform init \
+            -backend-config="bucket=family-app-tfstate-${{ needs.set-env.outputs.environment }}"
+
+      - name: Terraform Apply
+        working-directory: infra
+        run: |
+          terraform apply \
+            -var-file="${{ needs.set-env.outputs.tfvars_file }}" \
+            -auto-approve

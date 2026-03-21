@@ -1,0 +1,15 @@
+# Cloud Scheduler ジョブ定義
+# gcloud scheduler jobs create http <name> でデプロイ
+
+jobs:
+  - name: daily-dbt-trigger
+    description: "毎朝6時 (JST) に dbt パイプラインを実行"
+    schedule: "0 21 * * *"  # UTC 21:00 = JST 06:00
+    timezone: "UTC"
+    target:
+      type: http
+      uri_template: "https://workflowexecutions.googleapis.com/v1/projects/{project}/locations/{region}/workflows/daily-dbt-pipeline/executions"
+      http_method: POST
+      body: |
+        {"argument": "{\"env\": \"{env}\"}"}
+      oauth_service_account: "family-app-workflows@{project}.iam.gserviceaccount.com"

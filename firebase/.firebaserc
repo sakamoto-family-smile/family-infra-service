@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "youyaku-ai-dev",
+    "dev": "youyaku-ai-dev",
+    "prod": "youyaku-ai"
+  }
+}
