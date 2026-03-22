@@ -1,9 +1,7 @@
-import asyncio
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
 from typing import Any
 from unittest.mock import patch
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -17,13 +15,6 @@ TEST_DATABASE_URL = (
     f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}"
     f"@localhost:5432/{settings.DB_NAME}"
 )
-
-
-@pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest_asyncio.fixture(scope="session")

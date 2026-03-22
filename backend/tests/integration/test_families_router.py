@@ -13,6 +13,7 @@ async def test_get_family(client: AsyncClient, db_session):
     user = make_user(family_id=family.id, firebase_uid="test-firebase-uid")
     db_session.add(family)
     db_session.add(user)
+    await db_session.flush()
 
     with patch(
         "app.repositories.family_repository.FamilyRepository.get_by_id",
