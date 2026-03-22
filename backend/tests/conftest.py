@@ -15,7 +15,7 @@ from app.models.base import Base
 
 TEST_DATABASE_URL = (
     f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}"
-    f"@localhost:5432/{settings.DB_NAME}_test"
+    f"@localhost:5432/{settings.DB_NAME}"
 )
 
 

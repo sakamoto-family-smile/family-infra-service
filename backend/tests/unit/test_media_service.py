@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -68,7 +69,7 @@ async def test_upload_success():
     mock_media.file_size_bytes = 15
     mock_media.context_type = "avatar"
     mock_media.context_id = None
-    mock_media.created_at = None
+    mock_media.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
 
     service.repo.create = AsyncMock(return_value=mock_media)
 
