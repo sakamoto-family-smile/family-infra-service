@@ -48,11 +48,11 @@ async def test_build_gcs_path_family_icon():
 async def test_upload_success():
     db = MagicMock()
 
-    with patch("app.services.media_service.GCSClient") as MockGCS:
+    with patch("app.services.media_service.GCSClient") as mock_gcs_class:
         mock_gcs_instance = MagicMock()
         mock_gcs_instance.upload = AsyncMock()
         mock_gcs_instance.get_signed_url = AsyncMock(return_value="https://signed.url/file")
-        MockGCS.return_value = mock_gcs_instance
+        mock_gcs_class.return_value = mock_gcs_instance
 
         service = MediaService(db)
 
