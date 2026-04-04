@@ -20,7 +20,7 @@ async def test_create_room():
     service.repo.create = AsyncMock(return_value=room)
 
     result = await service.create_room(
-        family_id, created_by, ChatRoomCreate(name="Family Chat", type="general")
+        family_id, created_by, ChatRoomCreate(name="Family Chat", type="family")
     )
     assert result.name == "Family Chat"
     service.repo.create.assert_called_once()
