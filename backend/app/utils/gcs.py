@@ -1,7 +1,7 @@
 import asyncio
 from datetime import timedelta
 
-from google.cloud import storage
+from google.cloud import storage  # type: ignore[attr-defined]
 
 
 class GCSClient:
@@ -30,11 +30,11 @@ class GCSClient:
     def _signed_url_sync(self, path: str, expires_in: int) -> str:
         bucket = self._get_bucket()
         blob = bucket.blob(path)
-        return blob.generate_signed_url(
+        return str(blob.generate_signed_url(
             expiration=timedelta(seconds=expires_in),
             method="GET",
             version="v4",
-        )
+        ))
 
     async def delete(self, path: str) -> None:
         loop = asyncio.get_running_loop()

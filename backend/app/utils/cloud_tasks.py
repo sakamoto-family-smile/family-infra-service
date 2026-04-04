@@ -1,6 +1,7 @@
 import asyncio
 import json
 from datetime import datetime, timezone
+from typing import Any
 
 from google.cloud import tasks_v2
 from google.protobuf import timestamp_pb2
@@ -17,7 +18,7 @@ class CloudTasksClient:
     async def create_task(
         self,
         url: str,
-        payload: dict,
+        payload: dict[str, Any],
         schedule_time: datetime | None = None,
     ) -> tasks_v2.Task:
         loop = asyncio.get_running_loop()
@@ -28,10 +29,10 @@ class CloudTasksClient:
     def _create_task_sync(
         self,
         url: str,
-        payload: dict,
+        payload: dict[str, Any],
         schedule_time: datetime | None,
     ) -> tasks_v2.Task:
-        task: dict = {
+        task: dict[str, Any] = {
             "http_request": {
                 "http_method": tasks_v2.HttpMethod.POST,
                 "url": url,

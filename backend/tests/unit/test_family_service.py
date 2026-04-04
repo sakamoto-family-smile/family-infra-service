@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -36,7 +36,6 @@ async def test_get_family_not_found():
 
 @pytest.mark.asyncio
 async def test_update_family():
-    import uuid
 
     db = MagicMock()
     service = FamilyService(db)
