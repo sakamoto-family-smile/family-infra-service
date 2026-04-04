@@ -9,6 +9,8 @@ import {
   onSnapshot,
   addDoc,
   updateDoc,
+  arrayUnion,
+  arrayRemove,
   doc,
   serverTimestamp,
   Timestamp,
@@ -94,24 +96,10 @@ export function useChat(roomId: string, messageLimit = 50): UseChatResult {
       if (!user || !roomId) return;
 
       const messageRef = doc(db, `chat_rooms/${roomId}/messages`, messageId);
-      const message = messages.find((m) => m.id === messageId);
-      if (!message) return;
-
-      const existingReaction = message.reactions.find((r) => r.emoji === emoji);
-      let updatedReactions: MessageReaction[];
-
-      if (existingReaction) {
-        if (existingReaction.userIds.includes(user.uid)) return;
-        updatedReactions = message.reactions.map((r) =>
-          r.emoji === emoji ? { ...r, userIds: [...r.userIds, user.uid] } : r
-        );
-      } else {
-        updatedReactions = [...message.reactions, { emoji, userIds: [user.uid] }];
-      }
-
-      await updateDoc(messageRef, { reactions: updatedReactions });
+      const newReaction: MessageReaction = { emoji, userIds: [user.uid] };
+      await updateDoc(messageRef, { reactions: arrayUnion(newReaction) });
     },
-    [user, roomId, messages]
+    [user, roomId]
   );
 
   const removeReaction = useCallback(
@@ -119,20 +107,10 @@ export function useChat(roomId: string, messageLimit = 50): UseChatResult {
       if (!user || !roomId) return;
 
       const messageRef = doc(db, `chat_rooms/${roomId}/messages`, messageId);
-      const message = messages.find((m) => m.id === messageId);
-      if (!message) return;
-
-      const updatedReactions = message.reactions
-        .map((r) =>
-          r.emoji === emoji
-            ? { ...r, userIds: r.userIds.filter((id) => id !== user.uid) }
-            : r
-        )
-        .filter((r) => r.userIds.length > 0);
-
-      await updateDoc(messageRef, { reactions: updatedReactions });
+      const reactionToRemove: MessageReaction = { emoji, userIds: [user.uid] };
+      await updateDoc(messageRef, { reactions: arrayRemove(reactionToRemove) });
     },
-    [user, roomId, messages]
+    [user, roomId]
   );
 
   return { messages, loading, error, sendMessage, addReaction, removeReaction };

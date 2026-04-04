@@ -25,10 +25,11 @@ service cloud.firestore {
     // ========================================
 
     // チャットメッセージ
-    // 本来は roomId から family_id を引いて isFamilyMember で制御するが、
-    // Firestore の単一ドキュメント読み取りを避けるため Custom Claims を活用
+    // Custom Claims の family_id と、チャットルームドキュメントの family_id を照合して制御
     match /chat_rooms/{roomId}/messages/{messageId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated()
+                  && get(/databases/$(database)/documents/chat_rooms/$(roomId)).data.family_id
+                     == request.auth.token.family_id;
       allow create: if isAuthenticated()
                     && request.resource.data.sender_id == request.auth.uid
                     && request.resource.data.keys().hasAll(['sender_id', 'type', 'body', 'created_at']);
@@ -44,7 +45,9 @@ service cloud.firestore {
 
     // リアクション
     match /chat_rooms/{roomId}/messages/{messageId}/reactions/{reactionId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated()
+                  && get(/databases/$(database)/documents/chat_rooms/$(roomId)).data.family_id
+                     == request.auth.token.family_id;
       allow create: if isAuthenticated()
                     && request.resource.data.user_id == request.auth.uid;
       allow delete: if isAuthenticated()

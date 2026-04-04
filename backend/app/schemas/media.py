@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
-MediaContextType = str  # 'avatar' | 'chat' | 'family_icon' | 'export'
+MediaContextType = Literal["avatar", "chat", "family_icon", "export"]
 
 
 class MediaUploadResponse(BaseModel):

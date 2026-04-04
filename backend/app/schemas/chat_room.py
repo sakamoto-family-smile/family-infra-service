@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
-ChatRoomType = str  # 'family' | 'direct' | 'group'
+ChatRoomType = Literal["family", "direct", "group"]
 
 
 class ChatRoomBase(BaseModel):

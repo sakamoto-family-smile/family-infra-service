@@ -67,7 +67,7 @@ export default function SettingsPage() {
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <button
-            onClick={signOut}
+            onClick={() => void signOut()}
             className="flex w-full items-center gap-4 px-5 py-4 hover:bg-red-50 transition-colors text-left"
           >
             <span className="text-2xl">🚪</span>

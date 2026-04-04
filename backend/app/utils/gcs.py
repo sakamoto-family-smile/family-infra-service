@@ -13,7 +13,7 @@ class GCSClient:
         return self._client.bucket(self.bucket_name)
 
     async def upload(self, path: str, data: bytes, content_type: str) -> None:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self._upload_sync, path, data, content_type)
 
     def _upload_sync(self, path: str, data: bytes, content_type: str) -> None:
@@ -22,7 +22,7 @@ class GCSClient:
         blob.upload_from_string(data, content_type=content_type)
 
     async def get_signed_url(self, path: str, expires_in: int = 3600) -> str:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             None, self._signed_url_sync, path, expires_in
         )
@@ -37,7 +37,7 @@ class GCSClient:
         ))
 
     async def delete(self, path: str) -> None:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self._delete_sync, path)
 
     def _delete_sync(self, path: str) -> None:

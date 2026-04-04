@@ -27,12 +27,18 @@ app = FastAPI(
 )
 
 app.add_middleware(LoggingMiddleware)
+
+_ALLOWED_ORIGINS = (
+    ["http://localhost:3000"]
+    if not settings.is_production
+    else settings.ALLOWED_ORIGINS
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if not settings.is_production else [],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])

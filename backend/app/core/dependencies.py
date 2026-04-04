@@ -13,7 +13,12 @@ from app.repositories.user_repository import UserRepository
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_factory() as session:
-        yield session
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
 
 
 DBSession = Annotated[AsyncSession, Depends(get_db)]

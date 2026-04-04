@@ -10,7 +10,7 @@ def make_chat_room(**kwargs) -> ChatRoom:
         "id": uuid.uuid4(),
         "family_id": family_id,
         "name": "General",
-        "type": "general",
+        "type": "family",
         "created_by": created_by,
     }
     defaults.update(kwargs)

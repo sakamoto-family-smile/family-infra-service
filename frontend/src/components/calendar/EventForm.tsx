@@ -16,6 +16,8 @@ interface EventFormProps {
   createdBy: string;
 }
 
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+
 export function EventForm({ members, initialData, onSubmit, onCancel, familyId, createdBy }: EventFormProps) {
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
@@ -75,8 +77,6 @@ export function EventForm({ members, initialData, onSubmit, onCancel, familyId, 
       setSubmitting(false);
     }
   };
-
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

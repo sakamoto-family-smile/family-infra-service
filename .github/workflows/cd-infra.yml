@@ -36,6 +36,7 @@ jobs:
   plan:
     needs: set-env
     runs-on: ubuntu-latest
+    environment: ${{ needs.set-env.outputs.environment }}
     permissions:
       contents: read
       id-token: write
@@ -69,6 +70,7 @@ jobs:
         run: |
           terraform plan \
             -var-file="${{ needs.set-env.outputs.tfvars_file }}" \
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
             -out=tfplan
 
       - name: Comment plan on PR
@@ -111,4 +113,5 @@ jobs:
         run: |
           terraform apply \
             -var-file="${{ needs.set-env.outputs.tfvars_file }}" \
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
             -auto-approve

@@ -24,6 +24,7 @@ out/
 *.tfstate
 *.tfstate.backup
 *.tfvars
+!environments/*.tfvars
 !*.tfvars.example
 
 # GCP credentials
