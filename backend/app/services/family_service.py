@@ -33,7 +33,7 @@ class FamilyService:
         family = Family(
             name=data.name,
             invite_code=code,
-            icon_url=data.icon_url,
+            icon_url=str(data.icon_url) if data.icon_url else None,
         )
         return await self.repo.create(family)
 
@@ -48,7 +48,7 @@ class FamilyService:
         if data.name is not None:
             family.name = data.name
         if data.icon_url is not None:
-            family.icon_url = data.icon_url
+            family.icon_url = str(data.icon_url)
         return await self.repo.update(family)
 
     async def regenerate_invite_code(self, family_id: uuid.UUID) -> Family:

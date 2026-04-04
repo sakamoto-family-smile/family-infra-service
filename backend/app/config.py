@@ -1,3 +1,4 @@
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -7,12 +8,18 @@ class Settings(BaseSettings):
     ENV: str = "dev"
     DEBUG: bool = False
 
-    # GCP
-    GCP_PROJECT_ID: str
+    # GCP (required — must be set via environment variable)
+    GCP_PROJECT_ID: str = ""
     GCP_REGION: str = "asia-northeast1"
 
     # CORS
     ALLOWED_ORIGINS: list[str] = []
+
+    @model_validator(mode="after")
+    def validate_required_fields(self) -> "Settings":
+        if not self.GCP_PROJECT_ID:
+            raise ValueError("GCP_PROJECT_ID environment variable must be set")
+        return self
 
     # Cloud SQL
     CLOUD_SQL_INSTANCE: str = ""

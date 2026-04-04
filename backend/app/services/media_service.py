@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timezone
+from typing import cast
 
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -87,7 +88,7 @@ class MediaService:
             file_name=saved.file_name,
             content_type=saved.content_type,
             file_size_bytes=saved.file_size_bytes,
-            context_type=saved.context_type,
+            context_type=cast(MediaContextType, saved.context_type),
             context_id=saved.context_id,
             signed_url=signed_url,
             created_at=saved.created_at,
