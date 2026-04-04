@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-AttendeeStatus = str  # 'accepted' | 'declined' | 'tentative'
+AttendeeStatus = Literal["accepted", "declined", "tentative", "pending"]
 
 
 class AttendeeCreate(BaseModel):
@@ -51,6 +52,13 @@ class CalendarEventUpdate(BaseModel):
     color: str | None = None
     recurrence_rule: str | None = None
     reminder_minutes: int | None = None
+
+    @model_validator(mode="after")
+    def validate_dates(self) -> "CalendarEventUpdate":
+        if self.start_at is not None and self.end_at is not None:
+            if self.end_at <= self.start_at:
+                raise ValueError("end_at must be after start_at")
+        return self
 
 
 class CalendarEventResponse(CalendarEventBase):

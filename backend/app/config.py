@@ -8,8 +8,11 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # GCP
-    GCP_PROJECT_ID: str = "youyaku-ai-dev"
+    GCP_PROJECT_ID: str
     GCP_REGION: str = "asia-northeast1"
+
+    # CORS
+    ALLOWED_ORIGINS: list[str] = []
 
     # Cloud SQL
     CLOUD_SQL_INSTANCE: str = ""

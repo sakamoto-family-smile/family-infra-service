@@ -5,6 +5,7 @@ from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.core.exceptions import BadRequestException
 from app.models.media_file import MediaFile
 from app.repositories.media_file_repository import MediaFileRepository
 from app.schemas.media import MediaContextType, MediaUploadResponse
@@ -51,7 +52,13 @@ class MediaService:
         context_type: MediaContextType,
         context_id: str | None = None,
     ) -> MediaUploadResponse:
+        if file.content_type not in ALLOWED_CONTENT_TYPES:
+            raise BadRequestException(f"Unsupported file type: {file.content_type}")
+
         content = await file.read()
+
+        if len(content) > MAX_FILE_SIZE:
+            raise BadRequestException("File size exceeds 10MB limit")
 
         gcs_path = self._build_gcs_path(
             context_type,

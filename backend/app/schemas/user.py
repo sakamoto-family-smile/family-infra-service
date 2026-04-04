@@ -1,14 +1,15 @@
 import uuid
 from datetime import date, datetime
+from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field
 
-UserRole = str  # 'admin' | 'member' | 'child'
+UserRole = Literal["admin", "member", "child"]
 
 
 class UserBase(BaseModel):
     display_name: str = Field(..., max_length=50)
-    avatar_url: str | None = None
+    avatar_url: AnyHttpUrl | None = None
     date_of_birth: date | None = None
 
 

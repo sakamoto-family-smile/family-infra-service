@@ -20,16 +20,16 @@ class FamilyService:
         self.db = db
         self.repo = FamilyRepository(db)
 
-    async def create(self, data: FamilyCreate) -> Family:
-        # Generate unique invite code
+    async def _get_unique_invite_code(self) -> str:
         for _ in range(10):
             code = _generate_invite_code()
             existing = await self.repo.get_by_invite_code(code)
             if not existing:
-                break
-        else:
-            raise ConflictException("Failed to generate unique invite code")
+                return code
+        raise ConflictException("Failed to generate unique invite code")
 
+    async def create(self, data: FamilyCreate) -> Family:
+        code = await self._get_unique_invite_code()
         family = Family(
             name=data.name,
             invite_code=code,
@@ -53,10 +53,5 @@ class FamilyService:
 
     async def regenerate_invite_code(self, family_id: uuid.UUID) -> Family:
         family = await self.get(family_id)
-        for _ in range(10):
-            code = _generate_invite_code()
-            existing = await self.repo.get_by_invite_code(code)
-            if not existing:
-                family.invite_code = code
-                return await self.repo.update(family)
-        raise ConflictException("Failed to generate unique invite code")
+        family.invite_code = await self._get_unique_invite_code()
+        return await self.repo.update(family)

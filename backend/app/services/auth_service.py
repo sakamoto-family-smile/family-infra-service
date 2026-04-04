@@ -17,8 +17,12 @@ class AuthService:
     async def verify_token(self, id_token: str) -> TokenVerifyResponse:
         try:
             decoded = firebase_admin.auth.verify_id_token(id_token)
-        except Exception as e:
-            raise UnauthorizedException(f"Token verification failed: {e}")
+        except firebase_admin.auth.InvalidIdTokenError:
+            raise UnauthorizedException("Invalid token")
+        except firebase_admin.auth.ExpiredIdTokenError:
+            raise UnauthorizedException("Token expired")
+        except Exception:
+            raise UnauthorizedException("Token verification failed")
 
         return TokenVerifyResponse(
             uid=decoded["uid"],

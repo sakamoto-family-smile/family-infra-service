@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, addDoc, getDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './useAuth';
 import { Family, FamilyMember } from '@/types/family';
@@ -50,8 +50,8 @@ export function useFamily(familyId?: string): UseFamilyResult {
   const createFamily = async (name: string): Promise<string> => {
     if (!user) throw new Error('User not authenticated');
 
-    const newFamilyRef = doc(db, 'families', `family_${Date.now()}`);
-    const newFamily: Omit<Family, 'id'> = {
+    const familiesRef = collection(db, 'families');
+    const newFamily = {
       name,
       members: [
         {
@@ -64,17 +64,12 @@ export function useFamily(familyId?: string): UseFamilyResult {
         },
       ],
       createdBy: user.uid,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    await setDoc(newFamilyRef, {
-      ...newFamily,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
+    };
 
-    return newFamilyRef.id;
+    const docRef = await addDoc(familiesRef, newFamily);
+    return docRef.id;
   };
 
   const updateFamily = async (id: string, data: Partial<Family>): Promise<void> => {

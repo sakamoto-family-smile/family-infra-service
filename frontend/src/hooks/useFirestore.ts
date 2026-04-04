@@ -120,7 +120,8 @@ export function useFirestoreCollection<T>(
     );
 
     return () => unsubscribe();
-  }, [collectionPath]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collectionPath, JSON.stringify(constraints)]);
 
   return { data, loading, error };
 }

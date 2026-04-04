@@ -1,12 +1,12 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import AnyHttpUrl, BaseModel, Field
 
 
 class FamilyBase(BaseModel):
     name: str = Field(..., max_length=100)
-    icon_url: str | None = None
+    icon_url: AnyHttpUrl | None = None
 
 
 class FamilyCreate(FamilyBase):
@@ -15,7 +15,7 @@ class FamilyCreate(FamilyBase):
 
 class FamilyUpdate(BaseModel):
     name: str | None = Field(None, max_length=100)
-    icon_url: str | None = None
+    icon_url: AnyHttpUrl | None = None
 
 
 class FamilyResponse(FamilyBase):

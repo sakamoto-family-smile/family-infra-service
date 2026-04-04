@@ -32,7 +32,7 @@ export function MessageInput({ onSend, disabled, placeholder = 'メッセージ�
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      void handleSend();
     }
   };
 
