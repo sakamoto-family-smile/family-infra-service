@@ -32,6 +32,9 @@ out/
 !firebase/*.json
 !data-platform/seeds/*.csv
 
+# Scripts env
+scripts/*.env
+
 # IDE
 .idea/
 .vscode/
